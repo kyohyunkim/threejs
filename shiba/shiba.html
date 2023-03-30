@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Three.js 3D shiba Example</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="1000" height="1000"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        // scene, camera, renderer 생성
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 5);
+        scene.background = new THREE.Color('white');
+
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('#canvas'),
+            antialias: true //이미지 화질 개선
+        });
+        renderer.outputEncoding = THREE.sRGBEncoding;// 색이 똥개처럼 나오는걸 원본 색으로 바꿔줌 
+
+        // GLTFLoader 생성
+        const loader = new THREE.GLTFLoader();
+
+        
+        // 시바견 로드
+        loader.load('shiba/scene.gltf', function (gltf) {
+            
+            const shiba = gltf.scene.children[0];
+            shiba.position.set(0, 0, 0);
+            scene.add(shiba);
+
+            // 카메라 위치 설정
+            camera.position.z = 5;
+
+            // 마우스 이벤트 추가
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            let isDragging = false;
+            let previousMousePosition = {
+                x: 0,
+                y: 0
+            };
+            let scale = 1;
+
+
+
+            function onTouchStart(event) {
+                event.preventDefault();
+                isDragging = true;
+                previousTouchPosition = {
+                    x: event.touches[0].clientX,
+                    y: event.touches[0].clientY,
+                };
+            }
+
+            function onTouchMove(event) {
+                event.preventDefault();
+
+                if (isDragging) {
+                    const currentTouchPosition = {
+                        x: event.touches[0].clientX,
+                        y: event.touches[0].clientY,
+                    };
+
+                    const deltaMove = {
+                        x: currentTouchPosition.x - previousTouchPosition.x,
+                        y: currentTouchPosition.y - previousTouchPosition.y,
+                    };
+
+                    const deltaRotationQuaternion = new THREE.Quaternion().setFromEuler(
+                        new THREE.Euler(
+                            //toRadians(deltaMove.y * 1),
+                            0,
+                            toRadians(deltaMove.x * 1),
+                            0,
+                            "XYZ"
+                        )
+                    );
+
+                    shiba.quaternion.multiplyQuaternions(
+                        deltaRotationQuaternion,
+                        shiba.quaternion
+                    );
+
+                    previousTouchPosition = {
+                        x: currentTouchPosition.x,
+                        y: currentTouchPosition.y,
+                    };
+                }
+            }
+
+            function onTouchEnd(event) {
+                event.preventDefault();
+                isDragging = false;
+            }
+
+
+
+
+
+            function onMouseMove(event) {
+                event.preventDefault();
+
+                // 마우스 위치 계산
+                const deltaMove = {
+                    x: event.offsetX - previousMousePosition.x,
+                    y: event.offsetY - previousMousePosition.y
+                };
+
+                // 마우스 위치 업데이트
+                previousMousePosition = {
+                    x: event.offsetX,
+                    y: event.offsetY
+                };
+
+
+                // 마우스 움직임 적용
+                if (isDragging) {
+                    const deltaRotationQuaternion = new THREE.Quaternion()
+                        // XY축 둘다 변하게 하는 부분
+                        .setFromEuler(new THREE.Euler(
+                            // toRadians(deltaMove.y * 1),
+                            0,
+                            toRadians(deltaMove.x * 1),
+                            0,
+                            'XYZ'
+                        )); 
+
+                    shiba.quaternion.multiplyQuaternions(deltaRotationQuaternion, shiba.quaternion);
+                }
+            }
+
+            function onMouseDown(event) {
+                event.preventDefault();
+
+                // 마우스 클릭 감지
+                isDragging = true;
+
+                // 마우스 위치 업데이트
+                previousMousePosition = {
+                    x: event.offsetX,
+                    y: event.offsetY
+                };
+            }
+
+            function onMouseUp(event) {
+                event.preventDefault();
+
+                // 마우스 클릭 종료 감지
+                isDragging = false;
+            }
+
+            function onMouseWheel(event) {
+                event.preventDefault();
+
+                // 휠 움직임 계산
+                const delta = event.wheelDelta ? event.wheelDelta : -event.detail;
+                if (delta > 0) {
+                    scale += 0.1; // 크기 증가
+                } else if (delta < 0) {
+                    scale -= 0.1; // 크기 감소
+                }
+                scale = Math.max(scale, 0.1); // 최소 크기 설정
+
+                // 이미지 크기 업데이트
+                shiba.scale.set(scale, scale, scale);
+            }
+
+            function toRadians(angle) {
+                return angle * (Math.PI / 180);
+            }
+
+            // 이벤트 리스너 추가
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mouseup', onMouseUp);
+            window.addEventListener('mousewheel', onMouseWheel);
+            window.addEventListener('DOMMouseScroll', onMouseWheel);
+
+            renderer.domElement.addEventListener("touchstart", onTouchStart, {
+                passive: false,
+            });
+            renderer.domElement.addEventListener("touchmove", onTouchMove, {
+                passive: false,
+            });
+            renderer.domElement.addEventListener("touchend", onTouchEnd, {
+                passive: false,
+            });
+
+            // 애니메이션 함수
+            const animate = function () {
+                requestAnimationFrame(animate);// 사과 회전 애니메이션
+                shiba.rotation.z += 0.03;
+                //shiba.rotation.y += 0.01;
+
+                // 렌더링
+                renderer.render(scene, camera);
+            };
+
+            // animate 함수 호출
+            animate();
+        });
+
+
+
+    </script>
+</body>
+
+</html>
