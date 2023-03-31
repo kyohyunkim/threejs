@@ -22,8 +22,8 @@
         }
 
         .wrap {
-            width: 300px;
-            height: 300px;
+            width: 1000px;
+            height: 1000px;
             position: relative;
             overflow: hidden;
             border-radius: 10px;
@@ -40,7 +40,7 @@
 
 <body>
     <div class="wrap">
-        <canvas id="canvas" width="300" height="300">
+        <canvas id="canvas" width="1000" height="1000">
         </canvas>
         <img id="loading-gif" src="load.gif" />
     </div>
@@ -138,8 +138,8 @@
 
                     const deltaRotationQuaternion = new THREE.Quaternion().setFromEuler(
                         new THREE.Euler(
-                            //toRadians(deltaMove.y * 1),
-                            0,
+                            toRadians(deltaMove.y * 1),
+                            // 0,
                             toRadians(deltaMove.x * 1),
                             0,
                             "XYZ"
