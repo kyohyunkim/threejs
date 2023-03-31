@@ -123,8 +123,8 @@
 
                     const deltaRotationQuaternion = new THREE.Quaternion().setFromEuler(
                         new THREE.Euler(
-                            //toRadians(deltaMove.y * 1),
-                            0,
+                            toRadians(deltaMove.y * 1),
+                            // 0,
                             toRadians(deltaMove.x * 1),
                             0,
                             "XYZ"
@@ -245,7 +245,7 @@
             // 애니메이션 함수
             const animate = function () {
                 requestAnimationFrame(animate);// 사과 회전 애니메이션
-                // shiba.rotation.x += 0.03;
+                shiba.rotation.z += 0.03;
                 shiba.rotation.y += 0.01;
 
                 // 렌더링
